@@ -6,129 +6,174 @@ import webbrowser
 import os
 import time
 import subprocess
-from ecapture import ec
+from ecapture import ecapture as ec
 import wolframalpha
+import json
 import requests
 
-# Initialize pyttsx3 engine
-engine = pyttsx3.init('sapi5')
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
 
-# Set the desired speed
-desired_speed = 110
+print('Loading your AI personal assistant - Sara')
+
+engine=pyttsx3.init('sapi5')
+voices=engine.getProperty('voices')
+engine.setProperty('voice',voices[1].id)
+
+# Set the desired speed (change the value as needed)
+desired_speed = 110  # Adjust this value to set the speed
 engine.setProperty('rate', desired_speed)
 
+
 def speak(text):
-    """Function to speak out the given text."""
     engine.say(text)
     engine.runAndWait()
 
 def wishMe():
-    """Function to wish the user based on the time of the day."""
-    hour = datetime.datetime.now().hour
-    if 0 <= hour < 12:
-        speak("Hello,  Good Morning")
-    elif 12 <= hour < 18:
-        speak("Hello,  Good Afternoon")
+    hour=datetime.datetime.now().hour
+    if hour>=0 and hour<12:
+        speak("Hello,Good Morning")
+        print("Hello,Good Morning")
+    elif hour>=12 and hour<18:
+        speak("Hello,Good Afternoon")
+        print("Hello,Good Afternoon")
     else:
-        speak("Hello,  Good Evening")
+        speak("Hello,Good Evening")
+        print("Hello,Good Evening")
 
 def takeCommand():
-    """Function to take user's voice input and return the recognized text."""
-    recognizer = sr.Recognizer()
+    r=sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening...")
-        audio = recognizer.listen(source)
-    
-    try:
-        statement = recognizer.recognize_google(audio, language='en-in').lower()
-        print(f"User said: {statement}\n")
-    except Exception as e:
-        speak("Pardon me, please say that again")
-        return "None"
-    
-    return statement
+        audio=r.listen(source)
 
-def searchWikipedia(query):
-    """Function to search Wikipedia for the given query."""
-    speak('Searching Wikipedia...')
-    query = query.replace("wikipedia", "")
-    results = wikipedia.summary(query, sentences=3)
-    speak("According to Wikipedia")
-    speak(results)
+        try:
+            statement=r.recognize_google(audio,language='en-in')
+            print(f"user said:{statement}\n")
 
-def openWebpage(url):
-    """Function to open a webpage in the default web browser."""
-    webbrowser.open_new_tab(url)
-    speak(f"{url} is open now")
-    time.sleep(5)
+        except Exception as e:
+            speak("Pardon me, please say that again")
+            return "None"
+        return statement
 
-def getWeather(city_name):
-    """Function to fetch and speak the weather information of a city."""
-    api_key = "9f43880813ecb908bc961d341b20d279"
-    base_url = "https://api.openweathermap.org/data/2.5/weather?"
-    complete_url = f"{base_url}appid={api_key}&q={city_name}"
-    response = requests.get(complete_url)
-    data = response.json()
-    
-    if data["cod"] != "404":
-        main = data["main"]
-        current_temperature = main["temp"]
-        current_humidity = main["humidity"]
-        weather_description = data["weather"][0]["description"]
-        
-        speak(f"Temperature: {current_temperature} Kelvin, Humidity: {current_humidity}%, Description: {weather_description}")
-    else:
-        speak("City Not Found")
+speak("Loading your AI personal assistant Sara")
+wishMe()
 
-def getTime():
-    """Function to speak out the current time."""
-    current_time = datetime.datetime.now().strftime("%H:%M:%S")
-    speak(f"The time is {current_time}")
 
-# Add more functions for different functionalities like news, Stack Overflow, etc.
+if __name__=='__main__':
 
-# Main function
-if __name__ == '__main__':
-    print('Loading your AI personal assistant - Sara')
-    wishMe()
 
     while True:
         speak("Tell me how can I help you now?")
-        statement = takeCommand()
+        statement = takeCommand().lower()
+        if statement==0:
+            continue
 
         if "good bye" in statement or "ok bye" in statement or "stop" in statement:
-            speak('Your personal assistant Sara is shutting down, Goodbye')
-            print('Your personal assistant Sara is shutting down, Goodbye')
+            speak('your personal assistant G-one is shutting down,Good bye')
+            print('your personal assistant G-one is shutting down,Good bye')
             break
 
+
+
         if 'wikipedia' in statement:
-            searchWikipedia(statement)
+            speak('Searching Wikipedia...')
+            statement =statement.replace("wikipedia", "")
+            results = wikipedia.summary(statement, sentences=3)
+            speak("According to Wikipedia")
+            print(results)
+            speak(results)
 
         elif 'open youtube' in statement:
-            openWebpage("https://www.youtube.com")
+            webbrowser.open_new_tab("https://www.youtube.com")
+            speak("youtube is open now")
+            time.sleep(5)
 
         elif 'open google' in statement:
-            openWebpage("https://www.google.com")
+            webbrowser.open_new_tab("https://www.google.com")
+            speak("Google chrome is open now")
+            time.sleep(5)
 
         elif 'open gmail' in statement:
-            openWebpage("https://mail.google.com")
+            webbrowser.open_new_tab("gmail.com")
+            speak("Google Mail open now")
+            time.sleep(5)
 
         elif "weather" in statement:
-            speak("What's the city name?")
-            city_name = takeCommand()
-            getWeather(city_name)
+            api_key="9f43880813ecb908bc961d341b20d279"
+            base_url="https://api.openweathermap.org/data/2.5/weather?"
+            speak("whats the city name")
+            city_name=takeCommand()
+            complete_url=base_url+"appid="+api_key+"&q="+city_name
+            response = requests.get(complete_url)
+            x=response.json()
+            if x["cod"]!="404":
+                y=x["main"]
+                current_temperature = y["temp"]
+                current_humidiy = y["humidity"]
+                z = x["weather"]
+                weather_description = z[0]["description"]
+                speak(" Temperature in kelvin unit is " +
+                      str(current_temperature) +
+                      "\n humidity in percentage is " +
+                      str(current_humidiy) +
+                      "\n description  " +
+                      str(weather_description))
+                print(" Temperature in kelvin unit = " +
+                      str(current_temperature) +
+                      "\n humidity (in percentage) = " +
+                      str(current_humidiy) +
+                      "\n description = " +
+                      str(weather_description))
+
+            else:
+                speak(" City Not Found ")
+
+
 
         elif 'time' in statement:
-            getTime()
+            strTime=datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"the time is {strTime}")
 
-        # Add more conditions for other functionalities
+        elif 'who are you' in statement or 'what can you do' in statement:
+            speak('I am Sara version 1 point O your personal assistant. I am programmed to minor tasks like'
+                  'opening youtube,google chrome,gmail and stackoverflow ,predict time,take a photo,search wikipedia,predict weather' 
+                  'in different cities , get top headline news from times of india and you can ask me computational or geographical questions too!')
 
-        elif 'close tab' in statement or 'close the tab' in statement:
-            os.system("taskkill /im chrome.exe /f")
-            speak("The tab has been closed.")
 
-        # Add more conditions for other functionalities
+        elif "who made you" in statement or "who created you" in statement or "who discovered you" in statement:
+            speak("I was built by Tanishq")
+            print("I was built by Tanishq")
 
-    time.sleep(40)  # Sleep statement at the end (not sure why it's here)
+        elif "open stackoverflow" in statement:
+            webbrowser.open_new_tab("https://stackoverflow.com/login")
+            speak("Here is stackoverflow")
+
+        elif 'news' in statement:
+            news = webbrowser.open_new_tab("https://timesofindia.indiatimes.com/home/headlines")
+            speak('Here are some headlines from the Times of India,Happy reading')
+            time.sleep(6)
+
+        elif "camera" in statement or "take a photo" in statement:
+            ec.capture(0,"robo camera","img.jpg")
+
+        elif 'search'  in statement:
+            statement = statement.replace("search", "")
+            webbrowser.open_new_tab(statement)
+            time.sleep(5)
+
+        elif 'ask' in statement:
+            speak('I can answer to computational and geographical questions and what question do you want to ask now')
+            question=takeCommand()
+            app_id="T36YT8-AWRK3JLT94"
+            client = wolframalpha.Client('T36YT8-AWRK3JLT94')
+            res = client.query(question)
+            answer = next(res.results).text
+            speak(answer)
+            print(answer)
+
+
+        elif "log off" in statement or "sign out" in statement:
+            speak("Ok , your pc will log off in 10 seconds . Make sure you exit from all applications. ")
+            subprocess.call(["shutdown", "/l"])
+            break
+
+time.sleep(40)
